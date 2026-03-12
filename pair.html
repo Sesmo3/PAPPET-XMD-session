@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PAPPET-XMD Pair</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #121212;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    h1 {
+      color: #00ff88;
+      font-size: 28px;
+      margin-bottom: 20px;
+    }
+    input, button {
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      margin: 10px 0;
+      width: 100%;
+      max-width: 400px;
+    }
+    input {
+      background: #222;
+      color: #fff;
+      border: 1px solid #444;
+    }
+    button {
+      background-color: #00ff88;
+      color: #000;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background-color: #00cc6e;
+    }
+    button:disabled {
+      background-color: #555;
+      cursor: not-allowed;
+    }
+    .output {
+      margin-top: 30px;
+      background: #1e1e1e;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 500px;
+      width: 100%;
+      word-break: break-all;
+      border: 1px solid #333;
+      white-space: pre-wrap;
+    }
+    .note {
+      margin-top: 20px;
+      font-size: 13px;
+      color: #888;
+      max-width: 500px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🤖 PAPPET-XMD Pairing</h1>
+
+  <input type="text" id="number" placeholder="Enter WhatsApp Number (e.g., 254712345678)" />
+  <button id="btn" onclick="getCode()">Generate Pair Code</button>
+
+  <div id="result" class="output" style="display:none;"></div>
+  <p class="note">Enter your full WhatsApp number with country code (no + or spaces). A pairing code will be shown — enter it in WhatsApp under <strong>Linked Devices → Link with phone number</strong>. Your Session ID will then be sent to your WhatsApp.</p>
+
+  <script>
+    async function getCode() {
+      const number = document.getElementById("number").value.trim();
+      const resultBox = document.getElementById("result");
+      const btn = document.getElementById("btn");
+
+      if (!number) {
+        alert("Please enter a valid number.");
+        return;
+      }
+
+      resultBox.style.display = 'block';
+      resultBox.textContent = "⏳ Generating code, please wait...";
+      btn.disabled = true;
+      btn.textContent = "Generating...";
+
+      try {
+        const res = await fetch(`/code?number=${encodeURIComponent(number)}`);
+        const data = await res.json();
+
+        if (data.code) {
+          resultBox.textContent = `✅ Pairing Code: ${data.code}\n\nOpen WhatsApp → Linked Devices → Link with phone number → enter the code above.\n\nYour Session ID will be sent to your WhatsApp once linked.`;
+        } else if (data.error) {
+          resultBox.textContent = `❌ Error: ${data.error}`;
+        } else {
+          resultBox.textContent = "⚠️ Unknown response received.";
+        }
+      } catch (err) {
+        resultBox.textContent = `❌ Failed to get code: ${err.message}`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Generate Pair Code";
+      }
+    }
+  </script>
+
+</body>
+</html>
