@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PAPPET-XMD Pair</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #121212;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+    h1 { color: #00ff88; font-size: 26px; margin-bottom: 8px; }
+    .subtitle { color: #888; font-size: 14px; margin-bottom: 30px; text-align: center; }
+    .form-group { width: 100%; max-width: 420px; }
+    input {
+      padding: 13px 16px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #444;
+      width: 100%;
+      background: #222;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    input::placeholder { color: #555; }
+    .hint { font-size: 12px; color: #666; margin-bottom: 14px; padding-left: 4px; }
+    button {
+      padding: 13px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      width: 100%;
+      background-color: #00ff88;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover { background-color: #00cc6e; }
+    button:disabled { background-color: #444; color: #777; cursor: not-allowed; }
+    .output {
+      margin-top: 24px;
+      background: #1e1e1e;
+      padding: 20px;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 420px;
+      word-break: break-all;
+      border: 1px solid #333;
+      white-space: pre-wrap;
+      line-height: 1.6;
+      display: none;
+    }
+    .code-box {
+      background: #0a2e1a;
+      border: 2px solid #00ff88;
+      border-radius: 10px;
+      padding: 18px;
+      text-align: center;
+      margin-top: 14px;
+      display: none;
+    }
+    .code-box .label { font-size: 13px; color: #00ff88; margin-bottom: 8px; }
+    .code-box .code { font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #fff; }
+    .steps {
+      margin-top: 14px;
+      font-size: 13px;
+      color: #aaa;
+      line-height: 1.8;
+    }
+    .steps b { color: #fff; }
+    .error { color: #ff6b6b; }
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid #555;
+      border-top-color: #00ff88;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <h1>🤖 PAPPET-XMD Pairing</h1>
+  <p class="subtitle">Generate a pairing code to connect your WhatsApp to the bot</p>
+
+  <div class="form-group">
+    <input type="tel" id="number" placeholder="e.g. 254712345678" />
+    <p class="hint">Include country code — no +, spaces, or dashes (e.g. 254 for Kenya, 92 for Pakistan, 1 for USA)</p>
+    <button id="btn" onclick="getCode()">Generate Pair Code</button>
+  </div>
+
+  <div class="code-box" id="codeBox">
+    <div class="label">Your Pairing Code</div>
+    <div class="code" id="codeDisplay"></div>
+    <div class="steps">
+      <b>1.</b> Open WhatsApp on your phone<br>
+      <b>2.</b> Go to <b>Settings → Linked Devices → Link a Device</b><br>
+      <b>3.</b> Tap <b>"Link with phone number instead"</b><br>
+      <b>4.</b> Enter the code above<br>
+      <b>5.</b> Your Session ID will be sent to your WhatsApp
+    </div>
+  </div>
+
+  <div class="output" id="result"></div>
+
+  <script>
+    async function getCode() {
+      const number = document.getElementById("number").value.trim().replace(/\D/g, '');
+      const resultBox = document.getElementById("result");
+      const codeBox = document.getElementById("codeBox");
+      const codeDisplay = document.getElementById("codeDisplay");
+      const btn = document.getElementById("btn");
+
+      if (!number || number.length < 7) {
+        alert("Please enter a valid phone number with country code (digits only, e.g. 254712345678)");
+        return;
+      }
+
+      resultBox.style.display = 'none';
+      codeBox.style.display = 'none';
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Connecting to WhatsApp...';
+
+      try {
+        const res = await fetch(`/code?number=${encodeURIComponent(number)}`);
+        const data = await res.json();
+
+        if (data.code) {
+          codeDisplay.textContent = data.code;
+          codeBox.style.display = 'block';
+        } else {
+          resultBox.style.display = 'block';
+          resultBox.innerHTML = `<span class="error">❌ Error: ${data.error || 'Unknown error'}</span>`;
+        }
+      } catch (err) {
+        resultBox.style.display = 'block';
+        resultBox.innerHTML = `<span class="error">❌ Connection failed: ${err.message}</span>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Generate Pair Code';
+      }
+    }
+
+    document.getElementById("number").addEventListener("keydown", e => {
+      if (e.key === "Enter") getCode();
+    });
+  </script>
+
+</body>
+</html>
